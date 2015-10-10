@@ -44,7 +44,7 @@ impl BlipBuf {
         }
     }
 
-    pub fn clocks_needed(&mut self, sample_count: i32) -> i32 {
+    pub fn clocks_needed(&self, sample_count: i32) -> i32 {
         unsafe {
             ffi::blip_clocks_needed(self.ptr, sample_count as c_int) as i32
         }
@@ -56,7 +56,7 @@ impl BlipBuf {
         }
     }
 
-    pub fn samples_avail(&mut self) -> i32 {
+    pub fn samples_avail(&self) -> i32 {
         unsafe {
             ffi::blip_samples_avail(self.ptr) as i32
         }
