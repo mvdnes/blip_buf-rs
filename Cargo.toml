@@ -5,3 +5,4 @@ authors = ["Mathijs van de Nes <git@mathijs.vd-nes.nl>"]
 
 [dependencies]
 blip_buf-sys = { path = "blip_buf-sys", version = "0.1" }
+libc = "0.1"
