@@ -1,0 +1,7 @@
+[package]
+name = "blip_buf"
+version = "0.1.0"
+authors = ["Mathijs van de Nes <git@mathijs.vd-nes.nl>"]
+
+[dependencies]
+blip_buf-sys = { path = "blip_buf-sys", version = "0.1" }
