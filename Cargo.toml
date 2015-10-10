@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Mathijs van de Nes <git@mathijs.vd-nes.nl>"]
 license = "MIT"
 repository = "https://github.com/mvdnes/blip_buf-rs"
+documentation = "http://mvdnes.github.io/rust-docs/blip_buf-rs/blip_buf/index.html"
 description = """
 Blip_buf is a small waveform synthesis library meant for use in classic video game sound chip emulation.
 Bindings to blip_buf (https://code.google.com/p/blip-buf/)
