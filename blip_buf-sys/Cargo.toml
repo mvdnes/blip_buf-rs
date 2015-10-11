@@ -1,6 +1,6 @@
 [package]
 name = "blip_buf-sys"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Mathijs van de Nes <git@mathijs.vd-nes.nl>"]
 build = "build.rs"
 license = "MIT"
