@@ -22,11 +22,11 @@
 extern crate blip_buf_sys as ffi;
 extern crate libc;
 
-use libc::{c_double, c_int, c_short, c_uint};
+use libc::{c_double, c_int, c_uint};
 
 /// Maximum `clock_rate / sample_rate ratio`. For a given `sample_rate`,
 /// `clock_rate` must not be greater than `sample_rate * MAX_RATIO`.
-pub const MAX_RATIO : i32 = 1048576;
+pub const MAX_RATIO : u32 = 1 << 20;
 
 /// Maximum number of samples that can be generated from one time frame.
 pub const MAX_FRAME : u32 = 4000;
@@ -40,7 +40,7 @@ impl BlipBuf {
     /// Creates new buffer that can hold at most sample_count samples. Sets rates
     /// so that there are `MAX_RATIO` clocks per sample. Returns pointer to new
     /// buffer, or panics if insufficient memory.
-    pub fn new(sample_count: i32) -> BlipBuf {
+    pub fn new(sample_count: u32) -> BlipBuf {
         unsafe {
             let ptr = ffi::blip_new(sample_count as c_int);
             assert!(!ptr.is_null());
@@ -80,9 +80,9 @@ impl BlipBuf {
 
     /// Length of time frame, in clocks, needed to make `sample_count` additional
     /// samples available.
-    pub fn clocks_needed(&self, sample_count: i32) -> i32 {
+    pub fn clocks_needed(&self, sample_count: u32) -> u32 {
         unsafe {
-            ffi::blip_clocks_needed(self.ptr, sample_count as c_int) as i32
+            ffi::blip_clocks_needed(self.ptr, sample_count as c_int) as u32
         }
     }
 
@@ -98,9 +98,9 @@ impl BlipBuf {
     }
 
     /// Number of buffered samples available for reading.
-    pub fn samples_avail(&self) -> i32 {
+    pub fn samples_avail(&self) -> u32 {
         unsafe {
-            ffi::blip_samples_avail(self.ptr) as i32
+            ffi::blip_samples_avail(self.ptr) as u32
         }
     }
 
@@ -108,9 +108,9 @@ impl BlipBuf {
     /// `stereo` is true, writes output to every other element of `buf`, allowing easy
     /// interleaving of two buffers into a stereo sample stream. Outputs 16-bit signed
     /// samples. Returns number of samples actually read.
-    pub fn read_samples(&mut self, buf: &mut [i16], stereo: bool) -> i32 {
+    pub fn read_samples(&mut self, buf: &mut [i16], stereo: bool) -> usize {
         unsafe {
-            ffi::blip_read_samples(self.ptr, buf.as_ptr() as *mut c_short, buf.len() as c_int, stereo as c_int) as i32
+            ffi::blip_read_samples(self.ptr, buf.as_mut_ptr(), buf.len() as c_int, stereo as c_int) as usize
         }
     }
 }

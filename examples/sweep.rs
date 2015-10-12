@@ -6,7 +6,7 @@ const CLOCK_RATE : f64 = 1000000.0;
 const SAMPLE_RATE : u32 = 48000;
 
 fn main() {
-    let mut blip = BlipBuf::new(SAMPLE_RATE as i32 / 10);
+    let mut blip = BlipBuf::new(SAMPLE_RATE / 10);
     blip.set_rates(CLOCK_RATE, SAMPLE_RATE as f64 );
 
     let mut time  = 0;      // number of clocks until next wave delta
@@ -36,7 +36,7 @@ fn main() {
         {
             let mut temp = &mut [0i16; 1024];
             let count = blip.read_samples( temp, false );
-            play_samples( &temp[..(count as usize)] );
+            play_samples( &temp[..count] );
         }
     }
 
