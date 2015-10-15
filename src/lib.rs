@@ -110,7 +110,13 @@ impl BlipBuf {
     /// samples. Returns number of samples actually read.
     pub fn read_samples(&mut self, buf: &mut [i16], stereo: bool) -> usize {
         unsafe {
-            ffi::blip_read_samples(self.ptr, buf.as_mut_ptr(), buf.len() as c_int, stereo as c_int) as usize
+            let len = if stereo {
+                buf.len() / 2
+            }
+            else {
+                buf.len()
+            };
+            ffi::blip_read_samples(self.ptr, buf.as_mut_ptr(), len as c_int, stereo as c_int) as usize
         }
     }
 }
