@@ -36,6 +36,8 @@ pub struct BlipBuf {
     ptr: *mut ffi::blip_t,
 }
 
+unsafe impl Send for BlipBuf {}
+
 impl BlipBuf {
     /// Creates new buffer that can hold at most sample_count samples. Sets rates
     /// so that there are `MAX_RATIO` clocks per sample. Returns pointer to new
