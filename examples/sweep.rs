@@ -3,10 +3,10 @@ extern crate blip_buf;
 use blip_buf::BlipBuf;
 
 const CLOCK_RATE : f64 = 1000000.0;
-const SAMPLE_RATE : u32 = 48000;
+const SAMPLE_RATE : usize = 48000;
 
 fn main() {
-    let mut blip = BlipBuf::new(SAMPLE_RATE / 10);
+    let mut blip = BlipBuf::new();
     blip.set_rates(CLOCK_RATE, SAMPLE_RATE as f64 );
 
     let mut time  = 0;      // number of clocks until next wave delta
