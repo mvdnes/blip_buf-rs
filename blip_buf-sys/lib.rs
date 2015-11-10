@@ -30,13 +30,3 @@ extern "C" {
      -> ::libc::c_int;
     pub fn blip_delete(arg1: *mut blip_t) -> ();
 }
-
-
-#[no_mangle]
-pub extern "C" fn __assert_func(error: *const libc::c_char, file: *const libc::c_char, line: libc::c_int) {
-    unsafe {
-        let error = std::ffi::CStr::from_ptr(error);
-        let file = std::ffi::CStr::from_ptr(file);
-        panic!("Assertion failed: \"{}\" in {}:{}", std::str::from_utf8(error.to_bytes()).unwrap_or("?"), std::str::from_utf8(file.to_bytes()).unwrap_or("?"), line);
-    }
-}
