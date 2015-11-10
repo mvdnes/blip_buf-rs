@@ -130,3 +130,15 @@ impl Drop for BlipBuf {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::BlipBuf;
+
+    #[test]
+    fn basics() {
+        let mut blipbuf = BlipBuf::new(44100);
+        blipbuf.set_rates((1 << 22) as f64, 44100f64);
+        drop(blipbuf);
+    }
+}
