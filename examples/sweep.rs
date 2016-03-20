@@ -1,5 +1,6 @@
 extern crate blip_buf;
 
+use std::time::Duration;
 use blip_buf::BlipBuf;
 
 const CLOCK_RATE : f64 = 1000000.0;
@@ -41,7 +42,7 @@ fn main() {
     }
 
     // wait until the sound finishes
-    std::thread::sleep_ms(1000);
+    std::thread::sleep(Duration::from_secs(1));
 }
 
 fn play_samples(_buf: &[i16]) {
