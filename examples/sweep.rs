@@ -35,7 +35,7 @@ fn main() {
         // Read and play any output samples now available
         while blip.samples_avail() > 0
         {
-            let mut temp = &mut [0i16; 1024];
+            let temp = &mut [0i16; 1024];
             let count = blip.read_samples( temp, false );
             play_samples( &temp[..count] );
         }
