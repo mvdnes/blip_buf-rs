@@ -1,8 +1,7 @@
-extern crate gcc;
-
-use std::env;
+extern crate cc;
 
 fn main() {
-    gcc::compile_library("libblip_buf.a", &["blip_buf.c"]);
-    println!("cargo:root={}", env::var("OUT_DIR").unwrap());
+    cc::Build::new()
+        .file("blip_buf.c")
+        .compile("blip_buf");
 }
