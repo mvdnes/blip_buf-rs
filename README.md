@@ -1,7 +1,7 @@
 blip_buf-rs
 ===========
 
-[![Build Status](https://travis-ci.org/mvdnes/blip_buf-rs.svg?branch=master)](https://travis-ci.org/mvdnes/blip_buf-rs)
+![Build Status](https://github.com/mvdnes/blip_buf-rs/workflows/Rust/badge.svg)
 [![Crates.io version](https://img.shields.io/crates/v/blip_buf.svg)](https://crates.io/crates/blip_buf)
 
 [Documentation](http://mvdnes.github.io/rust-docs/blip_buf-rs/blip_buf/index.html)
