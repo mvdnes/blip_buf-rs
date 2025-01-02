@@ -9,7 +9,5 @@ description = """
 Blip_buf is a small waveform synthesis library meant for use in classic video game sound chip emulation.
 Bindings to blip_buf (https://code.google.com/p/blip-buf/)
 """
+edition = "2021"
 
-[dependencies]
-blip_buf-sys = { path = "blip_buf-sys", version = "0.1" }
-libc = "0.1"
