@@ -67,7 +67,7 @@ const MIN_SAMPLE: i32 = -32768;
 impl BlipBuf {
     /// Creates new buffer that can hold at most sample_count samples. Sets rates
     /// so that there are `MAX_RATIO` clocks per sample. Returns pointer to new
-    /// buffer, or panics if insu//fficient memory.
+    /// buffer, or panics if insufficient memory.
     pub fn new(sample_count: u32) -> BlipBuf {
         let sample_count = sample_count as usize;
         let mut blip = BlipBuf {
@@ -113,8 +113,8 @@ impl BlipBuf {
     }
 
     /// Adds positive/negative delta into buffer at specified clock time.
-    pub fn add_delta(&mut self, time: u32, mut delta: i32) {
-        let time = time as fixed_t;
+    pub fn add_delta(&mut self, clock_time: u32, delta: i32) {
+        let time = clock_time as fixed_t;
         let fixed = ((time * self.factor + self.offset) >> PRE_SHIFT) as usize;
         let out_index = self.avail + (fixed >> FRAC_BITS);
         let phase_shift = FRAC_BITS - PHASE_BITS;
@@ -125,7 +125,7 @@ impl BlipBuf {
         let prev = BL_STEP[PHASE_COUNT - phase - 1];
         let interp = (fixed >> (phase_shift - DELTA_BITS) & (DELTA_UNIT - 1)) as i32;
         let delta2 = (delta * interp) >> DELTA_BITS;
-        delta -= delta2;
+        let delta = delta - delta2;
 
         assert!(
             out_index <= self.samples.len() + END_FRAME_EXTRA,
@@ -153,8 +153,8 @@ impl BlipBuf {
     }
 
     /// Same as `add_delta()`, but uses faster, lower-quality synthesis.
-    pub fn add_delta_fast(&mut self, time: u32, delta: i32) {
-        let time = time as fixed_t;
+    pub fn add_delta_fast(&mut self, clock_time: u32, delta: i32) {
+        let time = clock_time as fixed_t;
         let fixed = ((time * self.factor + self.offset) >> PRE_SHIFT) as usize;
 
         let out_index = self.avail + (fixed >> FRAC_BITS);
@@ -197,8 +197,8 @@ impl BlipBuf {
     }
 
     /// Number of buffered samples available for reading.
-    pub fn samples_avail(&self) -> usize {
-        self.avail
+    pub fn samples_avail(&self) -> u32 {
+        self.avail as u32
     }
 
     fn remove_samples(&mut self, count: usize) {
