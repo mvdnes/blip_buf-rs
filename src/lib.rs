@@ -61,6 +61,8 @@ pub struct BlipBuf {
 unsafe impl Send for BlipBuf {}
 
 const MAX_SAMPLE: i32 = 32767;
+const MIN_SAMPLE: i32 = -32768;
+
 
 impl BlipBuf {
     /// Creates new buffer that can hold at most sample_count samples. Sets rates
@@ -248,11 +250,8 @@ impl BlipBuf {
 }
 
 #[inline]
-fn clamp(mut n: i32) -> i32 {
-    if n as i16 as i32 != n {
-        n = (n >> 16) ^ (MAX_SAMPLE as i32);
-    }
-    n
+fn clamp(n: i32) -> i32 {
+    n.clamp(MIN_SAMPLE, MAX_SAMPLE)
 }
 
 #[cfg(test)]
@@ -269,8 +268,6 @@ mod test {
     #[test]
     fn check_assumptions() {
         use super::*;
-
-        const MIN_SAMPLE: i32 = -32768;
 
         let mut n: i32;
 
