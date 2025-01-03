@@ -123,8 +123,8 @@ impl BlipBuf {
         let next = BL_STEP[phase + 1];
         let rev = BL_STEP[PHASE_COUNT - phase];
         let prev = BL_STEP[PHASE_COUNT - phase - 1];
-        let interp = fixed >> (phase_shift - DELTA_BITS) & (DELTA_UNIT - 1);
-        let delta2 = ((delta as i32) * (interp as i32)) >> DELTA_BITS;
+        let interp = (fixed >> (phase_shift - DELTA_BITS) & (DELTA_UNIT - 1)) as i32;
+        let delta2 = (delta * interp) >> DELTA_BITS;
         delta -= delta2;
 
         assert!(
@@ -153,22 +153,22 @@ impl BlipBuf {
     }
 
     /// Same as `add_delta()`, but uses faster, lower-quality synthesis.
-    pub fn add_delta_fast(&mut self, time: u32, delta: i16) {
+    pub fn add_delta_fast(&mut self, time: u32, delta: i32) {
         let time = time as fixed_t;
-        let fixed = (time * self.factor + self.offset >> PRE_SHIFT) as usize;
+        let fixed = ((time * self.factor + self.offset) >> PRE_SHIFT) as usize;
 
-        let out_index = self.avail + (fixed as usize >> FRAC_BITS);
+        let out_index = self.avail + (fixed >> FRAC_BITS);
 
-        let interp = fixed >> (FRAC_BITS - DELTA_BITS) & (DELTA_UNIT - 1);
-        let delta2 = ((delta as usize) * interp) as i16;
+        let interp = (fixed >> (FRAC_BITS - DELTA_BITS) & (DELTA_UNIT - 1)) as i32;
+        let delta2 = delta * interp;
 
         assert!(
             { out_index <= (self.samples.len()) },
             "buffer size was exceeded"
         );
 
-        self.samples[out_index + 7] += (delta * (DELTA_UNIT as i16) - delta2) as i32;
-        self.samples[out_index + 8] += delta2 as i32;
+        self.samples[out_index + 7] += delta * (DELTA_UNIT as i32) - delta2;
+        self.samples[out_index + 8] += delta2;
     }
 
     /// Length of time frame, in clocks, needed to make `sample_count` additional
@@ -200,6 +200,7 @@ impl BlipBuf {
     pub fn samples_avail(&self) -> usize {
         self.avail
     }
+
     fn remove_samples(&mut self, count: usize) {
         let remain = self.avail + BUF_EXTRA - count;
         self.avail -= count;
@@ -232,16 +233,14 @@ impl BlipBuf {
             let end = in_index + count;
             let mut sum = self.integrator;
             let mut out_index = 0;
-            while {
-                let s = sum >> DELTA_BITS;
+            while in_index < end {
+                let s = clamp(sum >> DELTA_BITS);
                 sum += self.samples[in_index];
                 in_index += 1;
-                clamp(s);
                 buf[out_index] = s as i16;
                 out_index += step;
                 sum -= s << (DELTA_BITS - BASS_SHIFT);
-                in_index != end
-            } {}
+            }
             self.integrator = sum;
             self.remove_samples(count);
         }
@@ -318,5 +317,5 @@ const BL_STEP: &'static [&'static [i16]] = &[
     &[4, 31, -94, 341, -507, 1278, -1205, 7713],
     &[3, 35, -102, 347, -506, 1238, -1119, 7082],
     &[1, 40, -110, 350, -499, 1190, -1021, 6464],
-    &[0, 43, -115, 350, -488, 1136, -914, 586],
+    &[0, 43, -115, 350, -488, 1136, -914, 5861],
 ];
