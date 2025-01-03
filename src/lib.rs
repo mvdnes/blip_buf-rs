@@ -21,13 +21,13 @@
 
 /// Maximum `clock_rate / sample_rate ratio`. For a given `sample_rate`,
 /// `clock_rate` must not be greater than `sample_rate * MAX_RATIO`.
-pub const MAX_RATIO: usize = 1 << 20;
+pub const MAX_RATIO: u64 = 1 << 20;
 
 /// Maximum number of samples that can be generated from one time frame.
 pub const MAX_FRAME: u32 = 4000;
 
 #[allow(non_camel_case_types)]
-type fixed_t = usize;
+type fixed_t = u64;
 
 #[allow(non_camel_case_types)]
 type enum_t = usize;
@@ -37,12 +37,12 @@ type buf_t = i32;
 
 const PRE_SHIFT: enum_t = 32;
 const TIME_BITS: enum_t = PRE_SHIFT + 20;
-const TIME_UNIT: fixed_t = 1 << TIME_BITS;
+const TIME_UNIT: fixed_t = (1 as fixed_t) << TIME_BITS;
 const BASS_SHIFT: enum_t = 9;
-const END_FRAME_EXTRA: usize = 2;
+const END_FRAME_EXTRA: enum_t = 2;
 
-const HALF_WIDTH: usize = 8;
-const BUF_EXTRA: usize = HALF_WIDTH * 2 + END_FRAME_EXTRA;
+const HALF_WIDTH: enum_t = 8;
+const BUF_EXTRA: enum_t = HALF_WIDTH * 2 + END_FRAME_EXTRA;
 const PHASE_BITS: enum_t = 5;
 const PHASE_COUNT: enum_t = 1 << PHASE_BITS;
 const DELTA_BITS: enum_t = 15;
@@ -60,7 +60,7 @@ pub struct BlipBuf {
 
 unsafe impl Send for BlipBuf {}
 
-const MAX_SAMPLE: enum_t = 32767;
+const MAX_SAMPLE: i32 = 32767;
 
 impl BlipBuf {
     /// Creates new buffer that can hold at most sample_count samples. Sets rates
@@ -112,7 +112,7 @@ impl BlipBuf {
 
     /// Adds positive/negative delta into buffer at specified clock time.
     pub fn add_delta(&mut self, time: u32, mut delta: i32) {
-        let time = time as usize;
+        let time = time as fixed_t;
         let fixed = ((time * self.factor + self.offset) >> PRE_SHIFT) as usize;
         let out_index = self.avail + (fixed >> FRAC_BITS);
         let phase_shift = FRAC_BITS - PHASE_BITS;
@@ -152,10 +152,10 @@ impl BlipBuf {
 
     /// Same as `add_delta()`, but uses faster, lower-quality synthesis.
     pub fn add_delta_fast(&mut self, time: u32, delta: i16) {
-        let time = time as usize;
-        let fixed = time * self.factor + self.offset >> PRE_SHIFT;
+        let time = time as fixed_t;
+        let fixed = (time * self.factor + self.offset >> PRE_SHIFT) as usize;
 
-        let out_index = self.avail + (fixed >> FRAC_BITS);
+        let out_index = self.avail + (fixed as usize >> FRAC_BITS);
 
         let interp = fixed >> (FRAC_BITS - DELTA_BITS) & (DELTA_UNIT - 1);
         let delta2 = ((delta as usize) * interp) as i16;
@@ -188,8 +188,8 @@ impl BlipBuf {
     /// frame specified. Deltas can have been added slightly past `clock_duration` (up to
     /// however many clocks there are in two output samples).
     pub fn end_frame(&mut self, clock_duration: u32) {
-        let off = (clock_duration as usize) * self.factor + self.offset;
-        self.avail += off >> TIME_BITS;
+        let off = (clock_duration as fixed_t) * self.factor + self.offset;
+        self.avail += (off >> TIME_BITS) as usize;
         self.offset = off & (TIME_UNIT - 1);
         assert!(self.avail <= self.samples.len(), "buffer size was exceeded");
     }
