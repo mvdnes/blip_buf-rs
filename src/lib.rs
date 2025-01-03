@@ -255,25 +255,6 @@ fn clamp(mut n: i32) -> i32 {
     n
 }
 
-#[test]
-fn check_assumptions() {
-    const MIN_SAMPLE: i32 = -32768;
-
-    let mut n: i32;
-
-    assert!((-3 >> 1) == -2); /* right shift must preserve sign */
-    n = MAX_SAMPLE * 2;
-    n = clamp(n);
-    assert!(n == MAX_SAMPLE);
-
-    n = MIN_SAMPLE * 2;
-    n = clamp(n);
-    assert!(n == MIN_SAMPLE);
-
-    assert!(MAX_RATIO as fixed_t <= TIME_UNIT);
-    assert!(MAX_FRAME as fixed_t <= !1 >> TIME_BITS);
-}
-
 #[cfg(test)]
 mod test {
     use super::BlipBuf;
@@ -283,6 +264,27 @@ mod test {
         let mut blipbuf = BlipBuf::new(44100);
         blipbuf.set_rates((1 << 22) as f64, 44100f64);
         drop(blipbuf);
+    }
+
+    #[test]
+    fn check_assumptions() {
+        use super::*;
+
+        const MIN_SAMPLE: i32 = -32768;
+
+        let mut n: i32;
+
+        assert!((-3 >> 1) == -2); /* right shift must preserve sign */
+        n = MAX_SAMPLE * 2;
+        n = clamp(n);
+        assert!(n == MAX_SAMPLE);
+
+        n = MIN_SAMPLE * 2;
+        n = clamp(n);
+        assert!(n == MIN_SAMPLE);
+
+        assert!(MAX_RATIO as fixed_t <= TIME_UNIT);
+        assert!(MAX_FRAME as fixed_t <= !1 >> TIME_BITS);
     }
 }
 
