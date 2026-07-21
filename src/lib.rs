@@ -21,13 +21,13 @@
 
 /// Maximum `clock_rate / sample_rate ratio`. For a given `sample_rate`,
 /// `clock_rate` must not be greater than `sample_rate * MAX_RATIO`.
-pub const MAX_RATIO: usize = 1 << 20;
+pub const MAX_RATIO: u64 = 1 << 20;
 
 /// Maximum number of samples that can be generated from one time frame.
-pub const MAX_FRAME: usize = 4000;
+pub const MAX_FRAME: u64 = 4000;
 
 #[allow(non_camel_case_types)]
-type fixed_t = usize;
+type fixed_t = u64;
 
 #[allow(non_camel_case_types)]
 type enum_t = usize;
@@ -64,9 +64,9 @@ impl BlipBuf {
     /// Creates new buffer that can hold at most sample_count samples. Sets rates
     /// so that there are `MAX_RATIO` clocks per sample. Returns pointer to new
     /// buffer, or panics if insufficient memory.
-    pub fn new(sample_count: usize) -> Self {
+    pub fn new(sample_count: u32) -> Self {
         let sample_count = sample_count as usize;
-        const FACTOR: usize = TIME_UNIT / MAX_RATIO;
+        const FACTOR: u64 = TIME_UNIT / MAX_RATIO;
         Self {
             factor: FACTOR,
             offset: FACTOR / 2,
@@ -85,7 +85,9 @@ impl BlipBuf {
 
         /* Fails if clock_rate exceeds maximum, relative to sample_rate */
         let in_bounds = 0.0 <= factor - factor_int as f64 && factor - (factor_int as f64) < 1.0;
-        if !in_bounds { return Err("clock_rate exceeds maximum, relative to sample_rate") }
+        if !in_bounds {
+            return Err("clock_rate exceeds maximum, relative to sample_rate");
+        }
 
         self.factor = factor.ceil() as fixed_t;
 
@@ -110,26 +112,29 @@ impl BlipBuf {
 
     /// Adds positive/negative delta into buffer at specified clock time.
     /// Returns an error if clock_time exceeds the buffer's capacity
-    pub fn add_delta(&mut self, clock_time: usize, delta: i32) -> Result<(), &'static str> {
-        let fixed = ((clock_time * self.factor + self.offset) >> PRE_SHIFT) as usize;
+    pub fn add_delta(&mut self, clock_time: u32, delta: i32) -> Result<(), &'static str> {
+        let time = clock_time as fixed_t;
+        let fixed = ((time * self.factor + self.offset) >> PRE_SHIFT) as usize;
         let out_index = self.avail + (fixed >> FRAC_BITS);
         if out_index + 16 > self.samples.len() {
-            return Err("buffer size was exceeded")
+            return Err("buffer size was exceeded");
         }
 
         const PHASE_SHIFT: usize = FRAC_BITS - PHASE_BITS;
         let phase = fixed >> PHASE_SHIFT & (PHASE_COUNT - 1);
         let phase_rev = PHASE_COUNT - phase;
-        
+
         let interp = (fixed >> (PHASE_SHIFT - DELTA_BITS) & (DELTA_UNIT - 1)) as i32;
         let delta2 = (delta * interp) >> DELTA_BITS;
         let delta1 = delta - delta2;
 
         for i in 0..8 {
-            self.samples[out_index + i] += BL_STEP[phase][i]*delta1 + BL_STEP[phase+1][i]*delta2;
+            self.samples[out_index + i] +=
+                BL_STEP[phase][i] * delta1 + BL_STEP[phase + 1][i] * delta2;
         }
         for i in 0..8 {
-            self.samples[out_index + 8 + i] += BL_STEP[phase_rev][7-i]*delta1 + BL_STEP[phase_rev-1][7-i]*delta2;
+            self.samples[out_index + 8 + i] +=
+                BL_STEP[phase_rev][7 - i] * delta1 + BL_STEP[phase_rev - 1][7 - i] * delta2;
         }
 
         Ok(())
@@ -137,12 +142,13 @@ impl BlipBuf {
 
     /// Same as `add_delta()`, but uses faster, lower-quality synthesis.
     /// Returns an error if clock_time exceeds the buffer's capacity
-    pub fn add_delta_fast(&mut self, clock_time: usize, delta: i32) -> Result<(), &'static str> {
-        let fixed = ((clock_time * self.factor + self.offset) >> PRE_SHIFT) as usize;
+    pub fn add_delta_fast(&mut self, clock_time: u32, delta: i32) -> Result<(), &'static str> {
+        let time = clock_time as fixed_t;
+        let fixed = ((time * self.factor + self.offset) >> PRE_SHIFT) as usize;
 
         let out_index = self.avail + (fixed >> FRAC_BITS);
         if out_index + 8 > self.samples.len() {
-            return Err("buffer size was exceeded")
+            return Err("buffer size was exceeded");
         }
 
         let interp = (fixed >> (FRAC_BITS - DELTA_BITS) & (DELTA_UNIT - 1)) as i32;
@@ -157,15 +163,19 @@ impl BlipBuf {
     /// Length of time frame, in clocks, needed to make `sample_count` additional
     /// samples available.
     /// Returns an error if sample_count exceeds the buffer's capacity
-    pub fn clocks_needed(&self, sample_count: usize) -> Result<usize, &'static str> {
+    pub fn clocks_needed(&self, sample_count: u32) -> Result<u32, &'static str> {
         /* Fails if buffer can't hold that many more samples */
-        if self.avail + sample_count as usize > self.samples.len() { return Err("can't hold that many more samples") }
+        if self.avail + sample_count as usize > self.samples.len() {
+            return Err("can't hold that many more samples");
+        }
 
-        let needed = sample_count * TIME_UNIT;
-        if needed < self.offset { return Ok(0) }
+        let needed = sample_count as fixed_t * TIME_UNIT;
+        if needed < self.offset {
+            return Ok(0);
+        }
 
         let res = (needed - self.offset + self.factor - 1) / self.factor;
-        Ok(res)
+        Ok(res as u32)
     }
 
     /// Makes input clocks before `clock_duration` available for reading as output
@@ -174,11 +184,13 @@ impl BlipBuf {
     /// frame specified. Deltas can have been added slightly past `clock_duration` (up to
     /// however many clocks there are in two output samples).
     /// Returns an error if clock_duration exceeds the buffer's capacity
-    pub fn end_frame(&mut self, clock_duration: usize) -> Result<(), &'static str> {
-        let off = clock_duration * self.factor + self.offset;
-        let avail = self.avail + (off >> TIME_BITS);
-        if avail > self.samples.len() { return Err("buffer size was exceeded") }
-        
+    pub fn end_frame(&mut self, clock_duration: u32) -> Result<(), &'static str> {
+        let off = (clock_duration as fixed_t) * self.factor + self.offset;
+        let avail = self.avail + (off >> TIME_BITS) as usize;
+        if avail > self.samples.len() {
+            return Err("buffer size was exceeded");
+        }
+
         self.avail = avail;
         self.offset = off & (TIME_UNIT - 1);
 
@@ -186,8 +198,8 @@ impl BlipBuf {
     }
 
     /// Number of buffered samples available for reading.
-    pub fn samples_avail(&self) -> usize {
-        self.avail
+    pub fn samples_avail(&self) -> u32 {
+        self.avail as u32
     }
 
     fn remove_samples(&mut self, count: usize) {
@@ -197,7 +209,7 @@ impl BlipBuf {
         // We emulate the following:
         //    memmove( &buf [0], &buf [count], remain * sizeof buf [0] );
         //    memset( &buf [remain], 0, count * sizeof buf [0] );
-        self.samples.copy_within(count..count+remain, 0);
+        self.samples.copy_within(count..count + remain, 0);
         self.samples[remain..].fill(0);
     }
 
