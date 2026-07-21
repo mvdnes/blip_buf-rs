@@ -3,7 +3,7 @@ extern crate blip_buf;
 use blip_buf::BlipBuf;
 
 const CLOCK_RATE: f64 = 1000000.0;
-const SAMPLE_RATE: usize = 4800;
+const SAMPLE_RATE: u32 = 4800;
 
 struct Lfsr13 {
     state: u32,
@@ -40,7 +40,7 @@ fn lfsr() {
         while time < clocks {
             let newval = lfsr.next();
             let delta = (newval as i32) - (oldval as i32);
-            blip.add_delta(time as usize, delta).unwrap();
+            blip.add_delta(time as u32, delta).unwrap();
             oldval = newval;
 
             time = time + period;
@@ -48,7 +48,7 @@ fn lfsr() {
 
         // Add those clocks to buffer and adjust time for next frame
         time = time - clocks;
-        blip.end_frame(clocks as usize).unwrap();
+        blip.end_frame(clocks as u32).unwrap();
 
         // Read any output samples now available
         while blip.samples_avail() > 0 {
