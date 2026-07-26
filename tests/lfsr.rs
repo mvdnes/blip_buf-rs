@@ -27,7 +27,7 @@ impl Lfsr13 {
 #[test]
 fn lfsr() {
     let mut blip = BlipBuf::new(SAMPLE_RATE / 10);
-    blip.set_rates(CLOCK_RATE, SAMPLE_RATE as f64);
+    blip.set_rates(CLOCK_RATE, SAMPLE_RATE as f64).unwrap();
 
     let period = 20;
     let mut time = 0;
@@ -40,7 +40,7 @@ fn lfsr() {
         while time < clocks {
             let newval = lfsr.next();
             let delta = (newval as i32) - (oldval as i32);
-            blip.add_delta(time as u32, delta);
+            blip.add_delta(time as u32, delta).unwrap();
             oldval = newval;
 
             time = time + period;
@@ -48,7 +48,7 @@ fn lfsr() {
 
         // Add those clocks to buffer and adjust time for next frame
         time = time - clocks;
-        blip.end_frame(clocks as u32);
+        blip.end_frame(clocks as u32).unwrap();
 
         // Read any output samples now available
         while blip.samples_avail() > 0 {
