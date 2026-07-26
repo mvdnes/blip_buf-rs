@@ -218,10 +218,10 @@ impl BlipBuf {
     /// interleaving of two buffers into a stereo sample stream. Outputs 16-bit signed
     /// samples. Returns number of samples actually read.
     pub fn read_samples(&mut self, buf: &mut [i16], stereo: bool) -> usize {
-        let count = buf.len().min(self.avail);
+        let step = if stereo { 2 } else { 1 };
+        let count = (buf.len() / step).min(self.avail);
 
         if count > 0 {
-            let step = if stereo { 2 } else { 1 };
             let mut sum = self.integrator;
 
             for i in 0..count {
